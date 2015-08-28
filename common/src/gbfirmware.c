@@ -157,8 +157,13 @@ static int gbfw_ready_to_boot(uint8_t status) {
 
 static int gbfw_ready_to_boot_response(gb_operation_header *header, void *data,
                                        uint32_t len) {
+    dbgprint("gbfw_ready_to_boot_response\n");
     if (header->status) {
         dbgprint("gbfw_ready_to_boot_response(): error status in response\r\n");
+        dbgprintx32("Size: ", header->size, "\r\n");
+        dbgprintx32("Id: ", header->id, "\r\n");
+        dbgprintx32("Status: ", header->id, "\r\n");
+        dbgprintx32("Type: ", header->id, "\r\n");
         return -header->status;
     }
     return 0;
@@ -324,6 +329,7 @@ static int data_load_greybus_load(void *dest, uint32_t length, bool hash) {
 static int data_load_greybus_finish(bool valid, bool is_secure_image) {
     int rc;
     uint8_t status = GB_FW_BOOT_STATUS_INVALID;
+    dbgprint("data_load_greybus_finish\r\n");
     if (valid && is_secure_image) {
         status = GB_FW_BOOT_STATUS_SECURE;
     }
