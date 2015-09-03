@@ -31,6 +31,9 @@
 
 #include <stdint.h>
 
+/* Boot stage whose firmware we request */
+#define NEXT_BOOT_STAGE            (BOOT_STAGE + 1)
+
 typedef struct {
     uint32_t resume_address;
     uint32_t resume_address_complement;
@@ -45,6 +48,7 @@ typedef struct {
  * common.ld!
  */
 #define COMMUNICATION_AREA_LENGTH   1024
+#define BOOT_STAGE_LENGTH   4
 #ifdef _SIMULATION
   #define DBGPRINT_BUF_LENGTH   128
 #else
@@ -55,12 +59,14 @@ typedef struct {
 #define S2_KEY_NAMELENGTH   96
 #define S2_FW_DESC_LENGTH   64
 #define RESUME_ADDR_LENGTH  (sizeof(resume_address_communication_area))
+#define BOOT_STAGE_LENGTH   4
 #define PAD_LENGTH  (COMMUNICATION_AREA_LENGTH - \
-                    (DBGPRINT_BUF_LENGTH + EUID_LENGTH + S2_FW_ID_LENGTH + \
-                     S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
+                    (BOOT_STAGE_LENGTH + DBGPRINT_BUF_LENGTH + EUID_LENGTH + \
+                     S2_FW_ID_LENGTH + S2_KEY_NAMELENGTH + S2_FW_DESC_LENGTH + \
                      RESUME_ADDR_LENGTH))
 
 typedef struct {
+    uint32_t boot_stage;
 #ifdef _SIMULATION
     char dbgprint_buf[DBGPRINT_BUF_LENGTH];
 #endif

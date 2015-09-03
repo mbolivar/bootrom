@@ -262,6 +262,8 @@ int load_tftf_image(data_load_ops *ops, uint32_t *is_secure_image) {
 
 void jump_to_image(void) {
     dbgflush();
+    communication_area *p = (communication_area *)&_communication_area;
+    p->boot_stage = NEXT_BOOT_STAGE;
     chip_jump_to_image(tftf.header.start_location);
 }
 

@@ -52,9 +52,6 @@ extern uint32_t gbfw_cportid;
 #define GB_FW_ERR_INVALID          (-1)
 #define GB_FW_ERR_FAILURE          (-2)
 
-/* Boot stage whose firmware we request */
-#define NEXT_BOOT_STAGE            (BOOT_STAGE + 1)
-
 /* Greybus FirmWare request and response payloads */
 struct __attribute__ ((__packed__)) gbfw_protocol_version_request {
   uint8_t major, minor;
