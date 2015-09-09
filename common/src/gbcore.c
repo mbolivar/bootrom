@@ -129,8 +129,10 @@ static int gbctrl_get_manifest_size(uint32_t cportid,
                                sizeof(payload));
 }
 
+uint8_t manifest_responded = 0;
 static int gbctrl_get_manifest(uint32_t cportid,
                              gb_operation_header *op_header) {
+    manifest_responded = 1;
     return greybus_op_response(cportid,
                                op_header,
                                GB_OP_SUCCESS,

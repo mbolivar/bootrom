@@ -224,15 +224,9 @@ int fw_cport_handler(uint32_t cportid, void *data, size_t len) {
 static int cport_connected = 0, offset = -1;
 static uint32_t firmware_size = 0;
 int greybus_cport_connect(void) {
-    int rc;
-
     if (cport_connected == 1) {
         /* Don't know what to do if it is already connected */
         return GB_FW_ERR_INVALID;
-    }
-    rc = chip_unipro_recv_cport(&gbfw_cportid);
-    if (rc) {
-        return rc;
     }
 
     offset = 0;
@@ -247,6 +241,8 @@ int greybus_cport_disconnect(void) {
     return 0;
 }
 
+extern uint8_t manifest_responded;
+
 static int data_load_greybus_init(void) {
     int rc;
 
@@ -256,6 +252,21 @@ static int data_load_greybus_init(void) {
     }
 
     /* poll until data cport connected */
+    while (!manifest_responded) {
+        rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
+        if (rc == GB_FW_ERR_INVALID) {
+            dbgprint("Greybus init failed\r\n");
+        }
+        if (rc) {
+            goto protocol_error;
+        }
+    }
+
+    rc = chip_unipro_recv_cport(&gbfw_cportid);
+    if (rc) {
+        return rc;
+    }
+
     while (cport_connected == 0) {
         rc = chip_unipro_receive(CONTROL_CPORT, control_cport_handler);
         if (rc == GB_FW_ERR_INVALID) {
