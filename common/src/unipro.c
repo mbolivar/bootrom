@@ -51,14 +51,14 @@ int read_mailbox(uint32_t *val) {
     }
 
     do {
-        rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
-                                   (uint32_t*)&unipro_rc);
-    } while (!rc && !unipro_rc && tempval == TSB_MAIL_RESET);
+        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+                                   ATTR_LOCAL, (uint32_t*)&unipro_rc);
+    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
     if (rc || unipro_rc) {
         return rc || unipro_rc;
     }
 
-    rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0, ATTR_LOCAL,
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
                                (uint32_t*)&unipro_rc);
     if (rc || unipro_rc) {
         return rc || unipro_rc;
@@ -75,9 +75,23 @@ int read_mailbox(uint32_t *val) {
  */
 int ack_mailbox(void) {
     int rc, unipro_rc;
+    uint32_t val, irq_status;
 
     rc = chip_unipro_attr_write(TSB_MAILBOX, TSB_MAIL_RESET, 0, ATTR_LOCAL,
-                                &unipro_rc);
+                                (uint32_t*)&unipro_rc);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
+    }
+
+    do {
+        rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
+                                   ATTR_LOCAL, (uint32_t*)&unipro_rc);
+    } while (!rc && !unipro_rc && !(irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
+    }
+
+    rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_LOCAL, NULL);
     if (rc || unipro_rc) {
         return rc || unipro_rc;
     }
