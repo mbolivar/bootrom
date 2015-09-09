@@ -42,9 +42,9 @@
  * @brief Synchronously read from our local mailbox.
  * @return 0 on success, <0 on error
  */
-int read_mailbox(uint32_t *val, uint32_t *result_code) {
-    int rc;
-    uint32_t result = 0, tempval = TSB_MAIL_RESET, irq_status;
+int read_mailbox(uint32_t *val) {
+    int rc, unipro_rc;
+    uint32_t tempval = TSB_MAIL_RESET, irq_status;
 
     if (!val) {
         return -EINVAL;
@@ -52,21 +52,18 @@ int read_mailbox(uint32_t *val, uint32_t *result_code) {
 
     do {
         rc = chip_unipro_attr_read(TSB_MAILBOX, &tempval, 0, ATTR_LOCAL,
-                                   &result);
-    } while (!rc && tempval == TSB_MAIL_RESET);
-    if (rc) {
-        return rc;
+                                   (uint32_t*)&unipro_rc);
+    } while (!rc && !unipro_rc && tempval == TSB_MAIL_RESET);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
     }
 
     rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0, ATTR_LOCAL,
-                               NULL);
-    if (rc) {
-        return rc;
+                               (uint32_t*)&unipro_rc);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
     }
 
-    if (result_code) {
-        *result_code = result;
-    }
     *val = tempval;
 
     return 0;
@@ -77,8 +74,15 @@ int read_mailbox(uint32_t *val, uint32_t *result_code) {
  * @return 0 on success, <0 on error
  */
 int ack_mailbox(void) {
-    return chip_unipro_attr_write(TSB_MAILBOX, TSB_MAIL_RESET, 0, ATTR_LOCAL,
-                                  NULL);
+    int rc, unipro_rc;
+
+    rc = chip_unipro_attr_write(TSB_MAILBOX, TSB_MAIL_RESET, 0, ATTR_LOCAL,
+                                &unipro_rc);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
+    }
+
+    return 0;
 }
 
 /**
@@ -86,13 +90,14 @@ int ack_mailbox(void) {
  * once we've written it.
  * @return 0 on success, <0 on error
  */
-int write_mailbox(uint32_t val, uint32_t *result_code) {
-    int rc;
-    uint32_t result = 0, irq_status = 0;
+int write_mailbox(uint32_t val) {
+    int rc, unipro_rc;
+    uint32_t irq_status = 0;
 
-    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER, &result);
-    if (rc) {
-        return rc;
+    rc = chip_unipro_attr_write(TSB_MAILBOX, val, 0, ATTR_PEER,
+                                (uint32_t*)&unipro_rc);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
     }
     /**
      * Poll the interrupt-assert line on the switch until we know the SVC has
@@ -100,25 +105,23 @@ int write_mailbox(uint32_t val, uint32_t *result_code) {
      */
     do {
         rc = chip_unipro_attr_read(TSB_INTERRUPTSTATUS, &irq_status, 0,
-                                   ATTR_PEER, NULL);
-    } while (!rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
-    if (rc) {
-        return rc;
+                                   ATTR_PEER, (uint32_t*)&unipro_rc);
+    } while (!rc && !unipro_rc && (irq_status & TSB_INTERRUPTSTATUS_MAILBOX));
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
     }
     /**
      * Now poll the switch mailbox until it's cleared, indicating the SVC has
      * given us the go-ahead.
      */
     do {
-        rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_PEER, NULL);
-    } while (!rc && val != TSB_MAIL_RESET);
-    if (rc) {
-        return rc;
+        rc = chip_unipro_attr_read(TSB_MAILBOX, &val, 0, ATTR_PEER,
+                                   (uint32_t*)&unipro_rc);
+    } while (!rc && !unipro_rc && val != TSB_MAIL_RESET);
+    if (rc || unipro_rc) {
+        return rc || unipro_rc;
     }
 
-    if (result_code) {
-        *result_code = result;
-    }
     return 0;
 }
 
@@ -134,7 +137,7 @@ int advertise_ready(void) {
      * Write that we're a ready non-AP module to the switch's mailbox
      * attribute.
      */
-    rc = write_mailbox(TSB_MAIL_READY_OTHER, NULL);
+    rc = write_mailbox(TSB_MAIL_READY_OTHER);
     if (rc) {
         return rc;
     }

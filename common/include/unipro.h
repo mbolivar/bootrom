@@ -351,7 +351,7 @@
  * @brief Synchronously read from local mailbox.
  * @return 0 on success, <0 on error
  */
-int read_mailbox(uint32_t *val, uint32_t *result_code);
+int read_mailbox(uint32_t *val);
 /**
  * @brief Acknowledge that we've read local mailbox, clearing it.
  * @return 0 on success, <0 on error
@@ -362,7 +362,7 @@ int ack_mailbox(void);
  * once we've written it.
  * @return 0 on success, <0 on error
  */
-int write_mailbox(uint32_t val, uint32_t *result_code);
+int write_mailbox(uint32_t val);
 
 /**
  * @brief Abstract out the chip-common parts of advertising readiness.
